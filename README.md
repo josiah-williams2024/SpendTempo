@@ -5,4 +5,4 @@ A mobile-friendly budgeting app with a colour-coded calendar to track income, ex
 
 
 ## Learn By Building
-This project is to to learn by building with Laravel and React + mobile design/deployment
+This project is to to learn by building with Laravel and React + mobile design/deployment. The main focus on Github pages and Laravel cloud hosting for PWA mobile apps.
