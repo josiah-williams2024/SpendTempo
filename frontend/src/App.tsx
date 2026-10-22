@@ -92,6 +92,7 @@ function App() {
   const [viewMonth, setViewMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [activeNav, setActiveNav] = useState('Home')
   const [isAdding, setIsAdding] = useState(false)
+  const [isEditingBudget, setIsEditingBudget] = useState(false)
   const [entryType, setEntryType] = useState<TransactionType>('expense')
   const [saveError, setSaveError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -149,6 +150,34 @@ function App() {
     }
   }
 
+  async function saveBudget(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const dailyLimitCents = Math.round(Number(form.get('daily_limit')) * 100)
+    setSaveError('')
+    setIsSaving(true)
+
+    try {
+      const currentBudget = budgets[0]
+      const result = currentBudget
+        ? await api.updateBudget(token, currentBudget.id, { daily_limit_cents: dailyLimitCents })
+        : await api.createBudget(token, {
+            daily_limit_cents: dailyLimitCents,
+            starts_on: dateKey(today.getFullYear(), today.getMonth(), today.getDate()),
+            ends_on: null,
+          })
+
+      setBudgets((current) => currentBudget
+        ? current.map((budget) => budget.id === result.data.id ? result.data : budget)
+        : [result.data, ...current])
+      setIsEditingBudget(false)
+    } catch (caught) {
+      setSaveError(caught instanceof Error ? caught.message : 'Could not save the daily limit.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (!token) return <AuthScreen onAuthenticated={authenticated} />
   if (isLoading || !user) return <div className="loading-screen"><div className="brand-mark">ST</div><p>Finding your tempo…</p></div>
 
@@ -186,7 +215,7 @@ function App() {
         </section>
         <section className="limit-row" aria-label="Daily spending limit">
           <div className="limit-ring" style={{ '--limit-progress': `${dailyLimit ? Math.min(100, (spentToday / dailyLimit) * 100) : 0}%` } as CSSProperties}><span>{formatMoney(spentToday).replace('.00', '')}</span><small>of {formatMoney(dailyLimit).replace('.00', '')}</small></div>
-          <div className="limit-copy"><p>Daily spending limit</p><strong>{formatMoney(Math.max(0, dailyLimit - spentToday))} left</strong><span>{spentToday <= dailyLimit ? 'You’re right on tempo.' : 'Today is over your limit.'}</span></div><button className="icon-button" aria-label="View daily limit details"><Icon name="chevron" /></button>
+          <div className="limit-copy"><p>Daily spending limit</p><strong>{dailyLimit ? `${formatMoney(Math.max(0, dailyLimit - spentToday))} left` : 'Set your daily limit'}</strong><span>{dailyLimit ? (spentToday <= dailyLimit ? 'You’re right on tempo.' : 'Today is over your limit.') : 'Choose an amount that works for you.'}</span></div><button className="icon-button" onClick={() => { setSaveError(''); setIsEditingBudget(true) }} aria-label="Edit daily spending limit"><Icon name="chevron" /></button>
         </section>
         <section className="calendar-section">
           <div className="section-heading"><div><p className="eyebrow">Your spending tempo</p><h2>{monthName}</h2></div><div className="month-controls" aria-label="Change month"><button onClick={() => setViewMonth(new Date(year, month - 1, 1))} aria-label="Previous month"><Icon name="back" size={18} /></button><button onClick={() => setViewMonth(new Date(year, month + 1, 1))} aria-label="Next month"><Icon name="chevron" size={18} /></button></div></div>
@@ -202,6 +231,7 @@ function App() {
       </main>
       <nav className="bottom-nav" aria-label="Primary navigation">{[['Home','home'],['Insights','chart'],['Budget','card'],['Profile','user']].map(([label, icon]) => <button className={activeNav === label ? 'active' : ''} key={label} onClick={() => setActiveNav(label)}><Icon name={icon}/><span>{label}</span></button>)}<button className="add-button" onClick={() => { setSaveError(''); setIsAdding(true) }} aria-label="Add transaction"><Icon name="plus" size={26}/></button></nav>
       {isAdding ? <div className="sheet-backdrop" onMouseDown={() => setIsAdding(false)}><form className="entry-sheet" role="dialog" aria-modal="true" aria-labelledby="entry-title" onSubmit={saveTransaction} onMouseDown={(event) => event.stopPropagation()}><div className="sheet-handle"/><div className="sheet-heading"><div><p className="eyebrow">New entry</p><h2 id="entry-title">Add transaction</h2></div><button type="button" className="icon-button" onClick={() => setIsAdding(false)} aria-label="Close"><Icon name="close"/></button></div><div className="type-toggle"><button type="button" className={entryType === 'expense' ? 'active' : ''} onClick={() => setEntryType('expense')}>Expense</button><button type="button" className={entryType === 'income' ? 'active' : ''} onClick={() => setEntryType('income')}>Income</button></div><label className="amount-field"><span>Amount</span><div><b>$</b><input name="amount" type="number" min="0.01" step="0.01" inputMode="decimal" placeholder="0.00" autoFocus required/></div></label><label className="field"><span>Category</span><select name="category_id" defaultValue="" required><option value="" disabled>Select a category</option>{filteredCategories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label><label className="field"><span>Note</span><input name="description" placeholder="What was this for?"/></label>{saveError ? <p className="form-error" role="alert">{saveError}</p> : null}<button className="save-button" disabled={isSaving}>{isSaving ? 'Saving…' : `Save ${entryType}`}</button></form></div> : null}
+      {isEditingBudget ? <div className="sheet-backdrop" onMouseDown={() => setIsEditingBudget(false)}><form className="entry-sheet" role="dialog" aria-modal="true" aria-labelledby="budget-title" onSubmit={saveBudget} onMouseDown={(event) => event.stopPropagation()}><div className="sheet-handle"/><div className="sheet-heading"><div><p className="eyebrow">Daily budget</p><h2 id="budget-title">Set your spending limit</h2></div><button type="button" className="icon-button" onClick={() => setIsEditingBudget(false)} aria-label="Close"><Icon name="close"/></button></div><p className="sheet-intro">We’ll use this amount to colour-code each day on your calendar.</p><label className="amount-field"><span>Daily limit</span><div><b>$</b><input name="daily_limit" type="number" min="0.01" step="0.01" inputMode="decimal" defaultValue={dailyLimit ? (dailyLimit / 100).toFixed(2) : ''} placeholder="50.00" autoFocus required/></div></label>{saveError ? <p className="form-error" role="alert">{saveError}</p> : null}<button className="save-button" disabled={isSaving}>{isSaving ? 'Saving…' : budgets[0] ? 'Update daily limit' : 'Set daily limit'}</button></form></div> : null}
     </div>
   )
 }

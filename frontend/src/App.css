@@ -113,6 +113,7 @@
 .sheet-handle { width: 42px; height: 4px; margin: 0 auto 18px; border-radius: 10px; background: #cbd2ce; }
 .sheet-heading { display: flex; align-items: center; justify-content: space-between; }
 .sheet-heading h2 { margin: 3px 0 0; font-size: 22px; }
+.sheet-intro { margin: 16px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .type-toggle { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; margin: 20px 0; border-radius: 15px; background: #e8ece9; }
 .type-toggle button { border: 0; border-radius: 12px; padding: 10px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 800; }
 .type-toggle button.active { color: var(--ink); background: white; box-shadow: 0 3px 8px rgba(21,36,32,.08); }
