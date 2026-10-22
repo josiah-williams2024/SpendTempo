@@ -43,7 +43,7 @@
 .dot-expense { background: var(--coral); }
 
 .limit-row { margin: 14px 0 26px; padding: 15px 12px 15px 15px; border-radius: 22px; background: var(--card); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 13px; border: 1px solid var(--line); }
-.limit-ring { width: 62px; height: 62px; display: grid; place-content: center; text-align: center; border-radius: 50%; background: radial-gradient(circle at center, white 59%, transparent 61%), conic-gradient(var(--lime-deep) 0 66%, #e9eee9 66%); }
+.limit-ring { width: 62px; height: 62px; display: grid; place-content: center; text-align: center; border-radius: 50%; background: radial-gradient(circle at center, white 59%, transparent 61%), conic-gradient(var(--lime-deep) 0 var(--limit-progress, 0%), #e9eee9 var(--limit-progress, 0%)); }
 .limit-ring span { font-size: 16px; font-weight: 850; line-height: 1; }
 .limit-ring small { color: var(--muted); font-size: 9px; margin-top: 3px; }
 .limit-copy p { margin: 0 0 3px; color: var(--muted); font-size: 11px; }
@@ -123,6 +123,19 @@
 .amount-field input { width: 100%; border: 0; outline: 0; padding: 12px 8px; background: transparent; color: var(--ink); font-size: 28px; font-weight: 800; }
 .field input, .field select { width: 100%; border: 1px solid var(--line); outline: 0; border-radius: 15px; padding: 13px 14px; background: white; color: var(--ink); font-size: 13px; }
 .save-button { width: 100%; margin-top: 22px; padding: 15px; border: 0; border-radius: 16px; background: var(--ink); color: white; font-size: 13px; font-weight: 800; }
+.save-button:disabled { cursor: wait; opacity: .65; }
+.form-error { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff0ec; color: #b74636; font-size: 11px; font-weight: 700; }
+.status-banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff0ec; color: #b74636; font-size: 11px; }
+
+.auth-shell, .loading-screen { width: min(100%, 480px); min-height: 100vh; margin: 0 auto; padding: 64px 24px 36px; background: var(--surface); }
+.brand-mark { width: 50px; height: 50px; display: grid; place-items: center; margin-bottom: 30px; border-radius: 17px; background: var(--ink); color: var(--lime); font-size: 15px; font-weight: 900; box-shadow: 0 10px 24px rgba(21,36,32,.18); }
+.auth-shell > h1 { max-width: 380px; margin: 8px 0 13px; color: var(--ink); font-size: clamp(36px, 10vw, 50px); line-height: .98; letter-spacing: -2px; }
+.auth-intro { max-width: 380px; margin: 0 0 28px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.auth-card { padding: 20px; border: 1px solid var(--line); border-radius: 24px; background: white; box-shadow: 0 16px 35px rgba(21,36,32,.07); }
+.auth-card .field:first-child { margin-top: 0; }
+.auth-switch { width: 100%; border: 0; padding: 17px; background: transparent; color: var(--green); font-size: 11px; font-weight: 800; }
+.loading-screen { display: grid; place-content: center; justify-items: center; color: var(--muted); font-size: 12px; }
+.loading-screen .brand-mark { margin: 0 0 16px; }
 
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(117, 89, 232, .35); outline-offset: 2px; }
 
