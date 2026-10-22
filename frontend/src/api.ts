@@ -63,6 +63,10 @@ export const api = {
   categories: (token: string) => request<Collection<Category>>('/categories', {}, token),
   transactions: (token: string) => request<Collection<Transaction>>('/transactions', {}, token),
   budgets: (token: string) => request<Collection<Budget>>('/budgets', {}, token),
+  createBudget: (token: string, body: { daily_limit_cents: number; starts_on: string; ends_on: string | null }) =>
+    request<Resource<Budget>>('/budgets', { method: 'POST', body: JSON.stringify(body) }, token),
+  updateBudget: (token: string, budgetId: number, body: { daily_limit_cents: number }) =>
+    request<Resource<Budget>>(`/budgets/${budgetId}`, { method: 'PATCH', body: JSON.stringify(body) }, token),
   createTransaction: (
     token: string,
     body: { category_id: number; amount_cents: number; type: 'income' | 'expense'; occurred_on: string; description: string | null },
