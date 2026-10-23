@@ -30,6 +30,13 @@ export type Budget = {
 type Collection<T> = { data: T[] }
 type Resource<T> = { data: T }
 type AuthResponse = { token: string; user: User }
+type TransactionInput = {
+  category_id: number
+  amount_cents: number
+  type: 'income' | 'expense'
+  occurred_on: string
+  description: string | null
+}
 
 const API_URL = import.meta.env.VITE_API_URL ?? ''
 
@@ -50,6 +57,8 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
     throw new Error(validationMessage ?? payload?.message ?? 'Something went wrong.')
   }
 
+  if (response.status === 204) return undefined as T
+
   return response.json()
 }
 
@@ -67,8 +76,10 @@ export const api = {
     request<Resource<Budget>>('/budgets', { method: 'POST', body: JSON.stringify(body) }, token),
   updateBudget: (token: string, budgetId: number, body: { daily_limit_cents: number }) =>
     request<Resource<Budget>>(`/budgets/${budgetId}`, { method: 'PATCH', body: JSON.stringify(body) }, token),
-  createTransaction: (
-    token: string,
-    body: { category_id: number; amount_cents: number; type: 'income' | 'expense'; occurred_on: string; description: string | null },
-  ) => request<Resource<Transaction>>('/transactions', { method: 'POST', body: JSON.stringify(body) }, token),
+  createTransaction: (token: string, body: TransactionInput) =>
+    request<Resource<Transaction>>('/transactions', { method: 'POST', body: JSON.stringify(body) }, token),
+  updateTransaction: (token: string, transactionId: number, body: TransactionInput) =>
+    request<Resource<Transaction>>(`/transactions/${transactionId}`, { method: 'PATCH', body: JSON.stringify(body) }, token),
+  deleteTransaction: (token: string, transactionId: number) =>
+    request<void>(`/transactions/${transactionId}`, { method: 'DELETE' }, token),
 }

@@ -87,12 +87,12 @@
 .mini-chart.monthly i:nth-child(1) { height: 78%; }.mini-chart.monthly i:nth-child(2) { height: 66%; }.mini-chart.monthly i:nth-child(3) { height: 85%; }.mini-chart.monthly i:nth-child(4) { height: 51%; }.mini-chart.monthly i:nth-child(5) { height: 72%; }.mini-chart.monthly i:nth-child(6) { height: 49%; }.mini-chart.monthly i:nth-child(7) { height: 40%; background: var(--purple); }
 
 .transaction-list { display: grid; gap: 9px; }
-.transaction { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 12px 13px; border-radius: 18px; background: white; border: 1px solid var(--line); }
+.transaction { width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 12px 13px; border-radius: 18px; background: white; color: var(--ink); text-align: left; border: 1px solid var(--line); }
 .transaction-icon { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; }
 .transaction-icon.expense { background: #fff0ec; color: var(--coral); }
 .transaction-icon.income { background: #edf7dc; color: #6f981b; }
 .transaction strong { display: block; font-size: 13px; }
-.transaction p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
+.transaction-copy > span { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
 .transaction > b { font-size: 13px; }
 .transaction > b.expense { color: var(--ink); }
 .transaction > b.income { color: var(--green); }
@@ -125,6 +125,9 @@
 .field input, .field select { width: 100%; border: 1px solid var(--line); outline: 0; border-radius: 15px; padding: 13px 14px; background: white; color: var(--ink); font-size: 13px; }
 .save-button { width: 100%; margin-top: 22px; padding: 15px; border: 0; border-radius: 16px; background: var(--ink); color: white; font-size: 13px; font-weight: 800; }
 .save-button:disabled { cursor: wait; opacity: .65; }
+.danger-button { width: 100%; margin-top: 10px; padding: 13px; border: 0; border-radius: 16px; background: transparent; color: #b74636; font-size: 12px; font-weight: 800; }
+.danger-button.confirming { background: #fff0ec; }
+.danger-button:disabled { cursor: wait; opacity: .65; }
 .form-error { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff0ec; color: #b74636; font-size: 11px; font-weight: 700; }
 .status-banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff0ec; color: #b74636; font-size: 11px; }
 
