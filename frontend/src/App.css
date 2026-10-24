@@ -196,6 +196,31 @@
 .budget-category-list strong { font-size: 12px; }
 .budget-category-list small { margin-top: 2px; color: var(--muted); font-size: 9px; }
 .budget-category-list b { font-size: 12px; }
+.profile-view { display: grid; gap: 16px; }
+.profile-card { display: flex; align-items: center; gap: 15px; padding: 20px; border-radius: 24px; background: var(--ink); color: white; }
+.profile-avatar { width: 58px; height: 58px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 19px; background: var(--lime); color: var(--ink); font-size: 16px; font-weight: 900; }
+.profile-card .eyebrow { color: #aebbb6; }
+.profile-card h2 { margin: 4px 0 2px; font-size: 21px; }
+.profile-card div > span { color: #aebbb6; font-size: 10px; }
+.profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.profile-stats article { padding: 14px 8px; border: 1px solid var(--line); border-radius: 18px; background: white; text-align: center; }
+.profile-stats strong, .profile-stats span { display: block; }
+.profile-stats strong { font-size: 17px; }
+.profile-stats span { margin-top: 3px; color: var(--muted); font-size: 8px; }
+.profile-section { padding: 17px; border: 1px solid var(--line); border-radius: 22px; background: white; }
+.profile-list { display: grid; margin-top: 10px; }
+.profile-list > div, .profile-list > button { width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 11px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); text-align: left; }
+.profile-list > :last-child { border-bottom: 0; }
+.profile-list > div > span, .profile-list > button > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: #edf4ef; color: var(--green); }
+.profile-list strong, .profile-list small { display: block; }
+.profile-list strong { font-size: 12px; }
+.profile-list small { margin-top: 3px; color: var(--muted); font-size: 9px; }
+.profile-list b { color: var(--muted); font-size: 10px; }
+.install-help { margin-top: 10px; padding: 13px; border-radius: 14px; background: var(--surface); }
+.install-help strong { font-size: 11px; }
+.install-help p { margin: 8px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.profile-signout { width: 100%; padding: 14px; border: 1px solid #f3c9c1; border-radius: 16px; background: #fff7f5; color: #b74636; font-size: 12px; font-weight: 800; }
+.profile-note { margin: -7px 12px 0; color: var(--muted); text-align: center; font-size: 9px; line-height: 1.5; }
 .form-error { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff0ec; color: #b74636; font-size: 11px; font-weight: 700; }
 .status-banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff0ec; color: #b74636; font-size: 11px; }
 
