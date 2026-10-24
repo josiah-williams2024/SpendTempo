@@ -65,8 +65,12 @@
 .calendar-day.safe i { background: var(--green); }
 .calendar-day.close i { background: var(--amber); }
 .calendar-day.over i { background: var(--coral); }
+.calendar-day.completed-under { background: #dff3e7; color: #246a48; }
+.calendar-day.completed-over { background: #ffe1dc; color: #a43f30; }
 .calendar-day:hover { background: #f1f4f1; transform: translateY(-1px); }
 .calendar-day.selected { color: var(--ink); background: var(--lime); box-shadow: 0 7px 14px rgba(155, 197, 44, .23); }
+.calendar-day.completed-under.selected { background: #bfe7ce; color: #174d34; box-shadow: 0 0 0 2px var(--green); }
+.calendar-day.completed-over.selected { background: #ffc2b8; color: #762b20; box-shadow: 0 0 0 2px var(--coral); }
 .calendar-day.selected i { background: var(--ink); }
 .legend { display: flex; gap: 16px; justify-content: center; margin-top: 11px; color: var(--muted); font-size: 9px; font-weight: 700; }
 .legend span { display: flex; align-items: center; gap: 5px; }
