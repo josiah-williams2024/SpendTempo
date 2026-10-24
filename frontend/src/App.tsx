@@ -80,6 +80,42 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (token: string, user
   )
 }
 
+function InsightsView({ transactions, viewMonth, onChangeMonth }: { transactions: Transaction[]; viewMonth: Date; onChangeMonth: (month: Date) => void }) {
+  const year = viewMonth.getFullYear()
+  const month = viewMonth.getMonth()
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`
+  const previousMonth = new Date(year, month - 1, 1)
+  const previousPrefix = `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`
+  const current = transactions.filter((item) => item.occurred_on.startsWith(monthPrefix))
+  const previous = transactions.filter((item) => item.occurred_on.startsWith(previousPrefix))
+  const expenses = current.filter((item) => item.type === 'expense')
+  const income = current.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount_cents, 0)
+  const spent = expenses.reduce((sum, item) => sum + item.amount_cents, 0)
+  const previousSpent = previous.filter((item) => item.type === 'expense').reduce((sum, item) => sum + item.amount_cents, 0)
+  const change = previousSpent ? Math.round(((spent - previousSpent) / previousSpent) * 100) : null
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const dailyTotals = Array.from({ length: daysInMonth }, (_, index) => expenses
+    .filter((item) => Number(item.occurred_on.slice(8, 10)) === index + 1)
+    .reduce((sum, item) => sum + item.amount_cents, 0))
+  const highestDay = Math.max(...dailyTotals, 1)
+  const categoryTotals = Array.from(expenses.reduce<Map<number, { category: Category; total: number }>>((totals, item) => {
+    const currentTotal = totals.get(item.category.id)?.total ?? 0
+    totals.set(item.category.id, { category: item.category, total: currentTotal + item.amount_cents })
+    return totals
+  }, new Map()).values()).sort((a, b) => b.total - a.total)
+  const spendingDays = dailyTotals.filter(Boolean).length
+
+  return (
+    <div className="insights-view">
+      <div className="section-heading insights-heading"><div><p className="eyebrow">Spending insights</p><h2>{viewMonth.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })}</h2></div><div className="month-controls" aria-label="Change insights month"><button onClick={() => onChangeMonth(new Date(year, month - 1, 1))} aria-label="Previous month"><Icon name="back" size={18}/></button><button onClick={() => onChangeMonth(new Date(year, month + 1, 1))} aria-label="Next month"><Icon name="chevron" size={18}/></button></div></div>
+      <section className="insight-hero"><p>Net balance</p><strong>{formatMoney(income - spent)}</strong><div><span>Income <b>{formatMoney(income)}</b></span><span>Spent <b>{formatMoney(spent)}</b></span></div></section>
+      <section className="insight-stats"><article><p>Weekly average</p><strong>{formatMoney(spent / Math.max(1, Math.ceil(daysInMonth / 7)))}</strong></article><article><p>Daily average</p><strong>{formatMoney(spendingDays ? spent / spendingDays : 0)}</strong></article><article><p>vs. last month</p><strong className={change !== null && change > 0 ? 'negative' : 'positive'}>{change === null ? 'No comparison' : `${change > 0 ? '+' : ''}${change}%`}</strong></article></section>
+      <section className="insight-card"><div className="section-heading compact"><div><p className="eyebrow">Daily trend</p><h2>Spending by day</h2></div></div>{spent ? <div className="daily-bars" aria-label="Daily spending chart">{dailyTotals.map((total, index) => <div key={index} title={`${index + 1}: ${formatMoney(total)}`}><i style={{ height: `${Math.max(total ? 8 : 2, (total / highestDay) * 100)}%` }}/><span>{index % 5 === 0 ? index + 1 : ''}</span></div>)}</div> : <div className="insight-empty">Add expenses to see your daily trend.</div>}</section>
+      <section className="insight-card"><div className="section-heading compact"><div><p className="eyebrow">Where it went</p><h2>Spending by category</h2></div></div>{categoryTotals.length ? <div className="category-breakdown">{categoryTotals.map(({ category, total }) => <div key={category.id}><div><span><i style={{ background: category.colour }}/>{category.name}</span><b>{formatMoney(total)}</b></div><div className="category-track"><i style={{ width: `${spent ? (total / spent) * 100 : 0}%`, background: category.colour }}/></div><small>{spent ? Math.round((total / spent) * 100) : 0}% of spending</small></div>)}</div> : <div className="insight-empty">No category spending for this month yet.</div>}</section>
+    </div>
+  )
+}
+
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) ?? '')
   const [user, setUser] = useState<User | null>(null)
@@ -312,8 +348,9 @@ function App() {
   return (
     <div className="app-shell">
       {loadError ? <p className="status-banner">{loadError}</p> : null}
-      <header className="topbar"><div><p className="eyebrow">{today.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' })}</p><h1>Good morning, {user.name.split(' ')[0]}</h1></div><button className="avatar" onClick={logout} aria-label="Sign out" title="Sign out">{initials}</button></header>
+      <header className="topbar"><div><p className="eyebrow">{today.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' })}</p><h1>{activeNav === 'Insights' ? 'Your insights' : `Good morning, ${user.name.split(' ')[0]}`}</h1></div><button className="avatar" onClick={logout} aria-label="Sign out" title="Sign out">{initials}</button></header>
       <main>
+        {activeNav === 'Insights' ? <InsightsView transactions={transactions} viewMonth={viewMonth} onChangeMonth={setViewMonth}/> : <>
         <section className="balance-card" aria-labelledby="balance-title">
           <div className="balance-topline"><div><p id="balance-title">Available this month</p><strong>{formatMoney(available)}</strong></div><span className="trend">Live</span></div>
           <div className="progress-track"><span style={{ width: `${income ? Math.min(100, (spent / income) * 100) : 0}%` }} /></div>
@@ -334,6 +371,7 @@ function App() {
         </section>
         <section className="averages-section"><div className="section-heading compact"><div><p className="eyebrow">At a glance</p><h2>Spending averages</h2></div></div><div className="average-grid"><article><div className="mini-chart weekly"><i/><i/><i/><i/><i/><i/><i/></div><p>Weekly average</p><strong>{formatMoney(weeklyAverage)}</strong><span>Across this month</span></article><article><div className="mini-chart monthly"><i/><i/><i/><i/><i/><i/><i/></div><p>Daily average</p><strong>{formatMoney(dailyAverage)}</strong><span>On spending days</span></article></div></section>
         <section className="activity-section"><div className="section-heading compact"><div><p className="eyebrow">{viewMonth.toLocaleDateString('en-CA', { month: 'long' })} {selectedDay}</p><h2>Activity</h2></div><button className="text-button" onClick={() => { closeCategoryEditor(); setIsManagingCategories(true) }}>Categories</button></div><div className="transaction-list">{selectedTransactions.length ? selectedTransactions.map((item) => <button type="button" className="transaction" key={item.id} onClick={() => { setEntryType(item.type); setSaveError(''); setIsConfirmingDelete(false); setEditingTransaction(item) }} aria-label={`Edit ${item.description || item.category.name}`}><span className={`transaction-icon ${item.type}`} style={{ color: item.category.colour, background: `${item.category.colour}18` }}><Icon name={item.type === 'income' ? 'wallet' : item.category.name === 'Transport' ? 'train' : item.category.name === 'Dining' ? 'coffee' : 'basket'} /></span><span className="transaction-copy"><strong>{item.description || item.category.name}</strong><span>{item.category.name}</span></span><b className={item.type}>{item.type === 'income' ? '+' : '−'}{formatMoney(item.amount_cents)}</b></button>) : <div className="empty-state"><span>✓</span><strong>No activity recorded</strong><p>A quiet day for your budget.</p></div>}</div></section>
+        </>}
       </main>
       <nav className="bottom-nav" aria-label="Primary navigation">{[['Home','home'],['Insights','chart'],['Budget','card'],['Profile','user']].map(([label, icon]) => <button className={activeNav === label ? 'active' : ''} key={label} onClick={() => setActiveNav(label)}><Icon name={icon}/><span>{label}</span></button>)}<button className="add-button" onClick={() => { setSaveError(''); setIsAdding(true) }} aria-label="Add transaction"><Icon name="plus" size={26}/></button></nav>
       {isAdding ? <div className="sheet-backdrop" onMouseDown={() => setIsAdding(false)}><form className="entry-sheet" role="dialog" aria-modal="true" aria-labelledby="entry-title" onSubmit={saveTransaction} onMouseDown={(event) => event.stopPropagation()}><div className="sheet-handle"/><div className="sheet-heading"><div><p className="eyebrow">New entry</p><h2 id="entry-title">Add transaction</h2></div><button type="button" className="icon-button" onClick={() => setIsAdding(false)} aria-label="Close"><Icon name="close"/></button></div><div className="type-toggle"><button type="button" className={entryType === 'expense' ? 'active' : ''} onClick={() => setEntryType('expense')}>Expense</button><button type="button" className={entryType === 'income' ? 'active' : ''} onClick={() => setEntryType('income')}>Income</button></div><label className="amount-field"><span>Amount</span><div><b>$</b><input name="amount" type="number" min="0.01" step="0.01" inputMode="decimal" placeholder="0.00" autoFocus required/></div></label><label className="field"><span>Category</span><select name="category_id" defaultValue="" required><option value="" disabled>Select a category</option>{filteredCategories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label><label className="field"><span>Note</span><input name="description" placeholder="What was this for?"/></label>{saveError ? <p className="form-error" role="alert">{saveError}</p> : null}<button className="save-button" disabled={isSaving}>{isSaving ? 'Saving…' : `Save ${entryType}`}</button></form></div> : null}
