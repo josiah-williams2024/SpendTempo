@@ -37,6 +37,7 @@ type TransactionInput = {
   occurred_on: string
   description: string | null
 }
+type CategoryInput = { name: string; type: 'income' | 'expense'; colour: string }
 
 const API_URL = import.meta.env.VITE_API_URL ?? ''
 
@@ -70,6 +71,12 @@ export const api = {
   logout: (token: string) => request<{ message: string }>('/logout', { method: 'POST' }, token),
   user: (token: string) => request<User>('/user', {}, token),
   categories: (token: string) => request<Collection<Category>>('/categories', {}, token),
+  createCategory: (token: string, body: CategoryInput) =>
+    request<Resource<Category>>('/categories', { method: 'POST', body: JSON.stringify(body) }, token),
+  updateCategory: (token: string, categoryId: number, body: Pick<CategoryInput, 'name' | 'colour'>) =>
+    request<Resource<Category>>(`/categories/${categoryId}`, { method: 'PATCH', body: JSON.stringify(body) }, token),
+  deleteCategory: (token: string, categoryId: number) =>
+    request<void>(`/categories/${categoryId}`, { method: 'DELETE' }, token),
   transactions: (token: string) => request<Collection<Transaction>>('/transactions', {}, token),
   budgets: (token: string) => request<Collection<Budget>>('/budgets', {}, token),
   createBudget: (token: string, body: { daily_limit_cents: number; starts_on: string; ends_on: string | null }) =>
