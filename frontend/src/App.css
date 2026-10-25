@@ -143,6 +143,17 @@
 .category-type-label { margin: 18px 0 0; color: var(--muted); font-size: 11px; font-weight: 750; text-transform: capitalize; }
 .colour-field > div { display: flex; align-items: center; gap: 12px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 15px; background: white; color: var(--muted); font-size: 11px; }
 .colour-field input { width: 42px; height: 34px; padding: 0; border: 0; border-radius: 9px; background: transparent; }
+.date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.recurring-list { display: grid; gap: 9px; }
+.recurring-list article { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 9px; padding: 12px; border: 1px solid var(--line); border-radius: 16px; background: white; }
+.recurring-list article.paused { opacity: .6; }
+.recurring-list article > i { width: 12px; height: 12px; border-radius: 5px; }
+.recurring-list strong, .recurring-list span { display: block; }
+.recurring-list strong { font-size: 11px; }
+.recurring-list span { margin-top: 3px; color: var(--muted); font-size: 8px; text-transform: capitalize; }
+.recurring-list button { border: 0; padding: 7px 5px; background: transparent; color: var(--green); font-size: 9px; font-weight: 800; }
+.recurring-list button:last-child { color: #b74636; }
+.recurring-list button.confirming { padding-inline: 8px; border-radius: 9px; background: #fff0ec; }
 .insights-view { display: grid; gap: 16px; }
 .insights-heading { margin-bottom: 0; }
 .insight-hero { padding: 22px; border-radius: 26px; background: var(--ink); color: white; box-shadow: 0 16px 34px rgba(21, 36, 32, .18); }
