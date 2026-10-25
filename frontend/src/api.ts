@@ -27,6 +27,19 @@ export type Budget = {
   ends_on: string | null
 }
 
+export type RecurringTransaction = {
+  id: number
+  category: Category
+  amount_cents: number
+  type: 'income' | 'expense'
+  description: string | null
+  frequency: 'weekly' | 'biweekly' | 'monthly' | 'yearly'
+  starts_on: string
+  ends_on: string | null
+  next_occurrence_on: string
+  active: boolean
+}
+
 type Collection<T> = { data: T[] }
 type Resource<T> = { data: T }
 type AuthResponse = { token: string; user: User }
@@ -38,6 +51,15 @@ type TransactionInput = {
   description: string | null
 }
 type CategoryInput = { name: string; type: 'income' | 'expense'; colour: string }
+type RecurringTransactionInput = {
+  category_id: number
+  amount_cents: number
+  type: 'income' | 'expense'
+  description: string | null
+  frequency: RecurringTransaction['frequency']
+  starts_on: string
+  ends_on: string | null
+}
 
 const API_URL = import.meta.env.VITE_API_URL ?? ''
 
@@ -89,4 +111,13 @@ export const api = {
     request<Resource<Transaction>>(`/transactions/${transactionId}`, { method: 'PATCH', body: JSON.stringify(body) }, token),
   deleteTransaction: (token: string, transactionId: number) =>
     request<void>(`/transactions/${transactionId}`, { method: 'DELETE' }, token),
+  recurringTransactions: (token: string) => request<Collection<RecurringTransaction>>('/recurring-transactions', {}, token),
+  createRecurringTransaction: (token: string, body: RecurringTransactionInput) =>
+    request<Resource<RecurringTransaction>>('/recurring-transactions', { method: 'POST', body: JSON.stringify(body) }, token),
+  updateRecurringTransaction: (token: string, recurringId: number, active: boolean) =>
+    request<Resource<RecurringTransaction>>(`/recurring-transactions/${recurringId}`, { method: 'PATCH', body: JSON.stringify({ active }) }, token),
+  deleteRecurringTransaction: (token: string, recurringId: number) =>
+    request<void>(`/recurring-transactions/${recurringId}`, { method: 'DELETE' }, token),
+  generateRecurringTransactions: (token: string) =>
+    request<{ generated: number }>('/recurring-transactions/generate', { method: 'POST' }, token),
 }

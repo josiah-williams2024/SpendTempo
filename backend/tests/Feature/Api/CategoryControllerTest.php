@@ -70,3 +70,24 @@ it('returns 409 when deleting a category used by a transaction', function () {
 
     $this->assertModelExists($category);
 });
+
+it('returns 409 when deleting a category used by a recurring transaction', function () {
+    $user = User::factory()->create();
+    $category = Category::factory()->for($user)->create();
+    $user->recurringTransactions()->create([
+        'category_id' => $category->id,
+        'amount_cents' => 1000,
+        'type' => $category->type,
+        'frequency' => 'monthly',
+        'starts_on' => '2026-10-25',
+        'next_occurrence_on' => '2026-10-25',
+        'active' => true,
+    ]);
+    Sanctum::actingAs($user);
+
+    $this->deleteJson("/api/categories/{$category->id}")
+        ->assertConflict()
+        ->assertJsonPath('message', 'Categories with recurring transactions cannot be deleted.');
+
+    $this->assertModelExists($category);
+});

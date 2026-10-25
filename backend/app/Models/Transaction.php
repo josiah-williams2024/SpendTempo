@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['category_id', 'amount_cents', 'type', 'occurred_on', 'description'])]
+#[Fillable(['category_id', 'recurring_transaction_id', 'amount_cents', 'type', 'occurred_on', 'description'])]
 class Transaction extends Model
 {
     /** @use HasFactory<TransactionFactory> */
@@ -23,6 +23,11 @@ class Transaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function recurringTransaction(): BelongsTo
+    {
+        return $this->belongsTo(RecurringTransaction::class);
     }
 
     protected function casts(): array

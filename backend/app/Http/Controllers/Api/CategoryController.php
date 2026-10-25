@@ -52,6 +52,12 @@ class CategoryController extends Controller
             ], 409);
         }
 
+        if ($categoryRecord->recurringTransactions()->exists()) {
+            return response()->json([
+                'message' => 'Categories with recurring transactions cannot be deleted.',
+            ], 409);
+        }
+
         $categoryRecord->delete();
 
         return response()->noContent();

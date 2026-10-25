@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 
-import { api, type Budget, type Category, type Transaction, type User } from './api'
+import { api, type Budget, type Category, type RecurringTransaction, type Transaction, type User } from './api'
 import './App.css'
 
 type TransactionType = 'expense' | 'income'
@@ -116,7 +116,7 @@ function InsightsView({ transactions, viewMonth, onChangeMonth }: { transactions
   )
 }
 
-function BudgetView({ transactions, categories, viewMonth, dailyLimit, onChangeMonth, onEditLimit, onManageCategories, onAddTransaction }: { transactions: Transaction[]; categories: Category[]; viewMonth: Date; dailyLimit: number; onChangeMonth: (month: Date) => void; onEditLimit: () => void; onManageCategories: () => void; onAddTransaction: () => void }) {
+function BudgetView({ transactions, categories, viewMonth, dailyLimit, onChangeMonth, onEditLimit, onManageCategories, onManageRecurring, onAddTransaction }: { transactions: Transaction[]; categories: Category[]; viewMonth: Date; dailyLimit: number; onChangeMonth: (month: Date) => void; onEditLimit: () => void; onManageCategories: () => void; onManageRecurring: () => void; onAddTransaction: () => void }) {
   const year = viewMonth.getFullYear()
   const month = viewMonth.getMonth()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -140,7 +140,7 @@ function BudgetView({ transactions, categories, viewMonth, dailyLimit, onChangeM
       <div className="section-heading budget-heading"><div><p className="eyebrow">Budget plan</p><h2>{viewMonth.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })}</h2></div><div className="month-controls" aria-label="Change budget month"><button onClick={() => onChangeMonth(new Date(year, month - 1, 1))} aria-label="Previous month"><Icon name="back" size={18}/></button><button onClick={() => onChangeMonth(new Date(year, month + 1, 1))} aria-label="Next month"><Icon name="chevron" size={18}/></button></div></div>
       <section className="budget-limit-card"><div><p>Daily spending limit</p><strong>{dailyLimit ? formatMoney(dailyLimit) : 'Not set'}</strong><span>{dailyLimit ? `${formatMoney(projectedLimit)} projected for ${daysInMonth} days` : 'Set a limit to track your pace.'}</span></div><button className="icon-button" onClick={onEditLimit} aria-label="Edit daily spending limit"><Icon name="chevron"/></button></section>
       <section className="budget-progress-card"><div className="budget-progress-heading"><div><p className="eyebrow">Monthly pace</p><h2>{formatMoney(spent)} spent</h2></div><strong>{projectedLimit ? `${Math.min(100, Math.round((spent / projectedLimit) * 100))}%` : '—'}</strong></div><div className="budget-progress-track"><i style={{ width: `${projectedLimit ? Math.min(100, (spent / projectedLimit) * 100) : 0}%` }}/></div><div className="budget-progress-meta"><span><b>{formatMoney(remaining)}</b> remaining</span><span><b>{daysOverLimit}</b> days over limit</span></div></section>
-      <section className="budget-actions"><button onClick={onAddTransaction}><span><Icon name="plus" size={18}/></span><div><strong>Add transaction</strong><small>Record income or spending</small></div><Icon name="chevron" size={17}/></button><button onClick={onManageCategories}><span><Icon name="card" size={18}/></span><div><strong>Manage categories</strong><small>Create, rename and recolour</small></div><Icon name="chevron" size={17}/></button></section>
+      <section className="budget-actions"><button onClick={onAddTransaction}><span><Icon name="plus" size={18}/></span><div><strong>Add transaction</strong><small>Record income or spending</small></div><Icon name="chevron" size={17}/></button><button onClick={onManageRecurring}><span><Icon name="wallet" size={18}/></span><div><strong>Recurring transactions</strong><small>Paycheques, bills and subscriptions</small></div><Icon name="chevron" size={17}/></button><button onClick={onManageCategories}><span><Icon name="card" size={18}/></span><div><strong>Manage categories</strong><small>Create, rename and recolour</small></div><Icon name="chevron" size={17}/></button></section>
       <section className="insight-card"><div className="section-heading compact"><div><p className="eyebrow">Expense plan</p><h2>Category spending</h2></div><button className="text-button" onClick={onManageCategories}>Manage</button></div>{expenseCategories.length ? <div className="budget-category-list">{expenseCategories.map(({ category, total }) => <div key={category.id}><i style={{ background: category.colour }}/><span><strong>{category.name}</strong><small>{spent ? Math.round((total / spent) * 100) : 0}% of expenses</small></span><b>{formatMoney(total)}</b></div>)}</div> : <div className="insight-empty">Create an expense category to start planning.</div>}</section>
     </div>
   )
@@ -167,6 +167,7 @@ function App() {
   const [categories, setCategories] = useState<Category[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [budgets, setBudgets] = useState<Budget[]>([])
+  const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([])
   const [isLoading, setIsLoading] = useState(Boolean(token))
   const [loadError, setLoadError] = useState('')
   const [selectedDay, setSelectedDay] = useState(today.getDate())
@@ -180,18 +181,25 @@ function App() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [isCreatingCategory, setIsCreatingCategory] = useState(false)
   const [categoryType, setCategoryType] = useState<TransactionType>('expense')
+  const [isManagingRecurring, setIsManagingRecurring] = useState(false)
+  const [isCreatingRecurring, setIsCreatingRecurring] = useState(false)
+  const [recurringType, setRecurringType] = useState<TransactionType>('expense')
+  const [recurringToDelete, setRecurringToDelete] = useState<number | null>(null)
   const [entryType, setEntryType] = useState<TransactionType>('expense')
   const [saveError, setSaveError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     if (!token) return
-    Promise.all([api.user(token), api.categories(token), api.transactions(token), api.budgets(token)])
-      .then(([currentUser, categoryData, transactionData, budgetData]) => {
+    Promise.all([api.user(token), api.categories(token), api.budgets(token)])
+      .then(async ([currentUser, categoryData, budgetData]) => {
+        await api.generateRecurringTransactions(token)
+        const [transactionData, recurringData] = await Promise.all([api.transactions(token), api.recurringTransactions(token)])
         setUser(currentUser)
         setCategories(categoryData.data)
         setTransactions(transactionData.data)
         setBudgets(budgetData.data)
+        setRecurringTransactions(recurringData.data)
       })
       .catch((caught) => {
         localStorage.removeItem(TOKEN_KEY)
@@ -365,6 +373,69 @@ function App() {
     }
   }
 
+  async function saveRecurringTransaction(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    setSaveError('')
+    setIsSaving(true)
+
+    try {
+      await api.createRecurringTransaction(token, {
+        category_id: Number(form.get('category_id')),
+        amount_cents: Math.round(Number(form.get('amount')) * 100),
+        type: recurringType,
+        description: String(form.get('description')).trim() || null,
+        frequency: String(form.get('frequency')) as RecurringTransaction['frequency'],
+        starts_on: String(form.get('starts_on')),
+        ends_on: String(form.get('ends_on')) || null,
+      })
+      await api.generateRecurringTransactions(token)
+      const [rules, transactionData] = await Promise.all([api.recurringTransactions(token), api.transactions(token)])
+      setRecurringTransactions(rules.data)
+      setTransactions(transactionData.data)
+      setIsCreatingRecurring(false)
+    } catch (caught) {
+      setSaveError(caught instanceof Error ? caught.message : 'Could not save the recurring transaction.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function toggleRecurringTransaction(rule: RecurringTransaction) {
+    setSaveError('')
+    setIsSaving(true)
+    try {
+      await api.updateRecurringTransaction(token, rule.id, !rule.active)
+      if (!rule.active) await api.generateRecurringTransactions(token)
+      const [rules, transactionData] = await Promise.all([api.recurringTransactions(token), api.transactions(token)])
+      setRecurringTransactions(rules.data)
+      setTransactions(transactionData.data)
+    } catch (caught) {
+      setSaveError(caught instanceof Error ? caught.message : 'Could not update the recurring transaction.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function deleteRecurringTransaction(rule: RecurringTransaction) {
+    if (recurringToDelete !== rule.id) {
+      setRecurringToDelete(rule.id)
+      return
+    }
+
+    setSaveError('')
+    setIsSaving(true)
+    try {
+      await api.deleteRecurringTransaction(token, rule.id)
+      setRecurringTransactions((current) => current.filter((item) => item.id !== rule.id))
+      setRecurringToDelete(null)
+    } catch (caught) {
+      setSaveError(caught instanceof Error ? caught.message : 'Could not delete the recurring transaction.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (!token) return <AuthScreen onAuthenticated={authenticated} />
   if (isLoading || !user) return <div className="loading-screen"><div className="brand-mark">ST</div><p>Finding your tempo…</p></div>
 
@@ -390,13 +461,14 @@ function App() {
   const weeklyAverage = spent / Math.max(1, Math.ceil(daysInMonth / 7))
   const initials = user.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()
   const filteredCategories = categories.filter((category) => category.type === entryType)
+  const recurringCategories = categories.filter((category) => category.type === recurringType)
 
   return (
     <div className="app-shell">
       {loadError ? <p className="status-banner">{loadError}</p> : null}
       <header className="topbar"><div><p className="eyebrow">{today.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' })}</p><h1>{activeNav === 'Insights' ? 'Your insights' : activeNav === 'Budget' ? 'Your budget' : activeNav === 'Profile' ? 'Your profile' : `Good morning, ${user.name.split(' ')[0]}`}</h1></div><button className="avatar" onClick={() => setActiveNav('Profile')} aria-label="Open profile" title="Profile">{initials}</button></header>
       <main>
-        {activeNav === 'Insights' ? <InsightsView transactions={transactions} viewMonth={viewMonth} onChangeMonth={setViewMonth}/> : activeNav === 'Budget' ? <BudgetView transactions={transactions} categories={categories} viewMonth={viewMonth} dailyLimit={dailyLimit} onChangeMonth={setViewMonth} onEditLimit={() => { setSaveError(''); setIsEditingBudget(true) }} onManageCategories={() => { closeCategoryEditor(); setIsManagingCategories(true) }} onAddTransaction={() => { setSaveError(''); setIsAdding(true) }}/> : activeNav === 'Profile' ? <ProfileView user={user} initials={initials} transactionCount={transactions.length} categoryCount={categories.length} onSignOut={logout}/> : <>
+        {activeNav === 'Insights' ? <InsightsView transactions={transactions} viewMonth={viewMonth} onChangeMonth={setViewMonth}/> : activeNav === 'Budget' ? <BudgetView transactions={transactions} categories={categories} viewMonth={viewMonth} dailyLimit={dailyLimit} onChangeMonth={setViewMonth} onEditLimit={() => { setSaveError(''); setIsEditingBudget(true) }} onManageCategories={() => { closeCategoryEditor(); setIsManagingCategories(true) }} onManageRecurring={() => { setSaveError(''); setRecurringToDelete(null); setIsCreatingRecurring(false); setIsManagingRecurring(true) }} onAddTransaction={() => { setSaveError(''); setIsAdding(true) }}/> : activeNav === 'Profile' ? <ProfileView user={user} initials={initials} transactionCount={transactions.length} categoryCount={categories.length} onSignOut={logout}/> : <>
         <section className="balance-card" aria-labelledby="balance-title">
           <div className="balance-topline"><div><p id="balance-title">Available this month</p><strong>{formatMoney(available)}</strong></div><span className="trend">Live</span></div>
           <div className="progress-track"><span style={{ width: `${income ? Math.min(100, (spent / income) * 100) : 0}%` }} /></div>
@@ -424,6 +496,7 @@ function App() {
       {isEditingBudget ? <div className="sheet-backdrop" onMouseDown={() => setIsEditingBudget(false)}><form className="entry-sheet" role="dialog" aria-modal="true" aria-labelledby="budget-title" onSubmit={saveBudget} onMouseDown={(event) => event.stopPropagation()}><div className="sheet-handle"/><div className="sheet-heading"><div><p className="eyebrow">Daily budget</p><h2 id="budget-title">Set your spending limit</h2></div><button type="button" className="icon-button" onClick={() => setIsEditingBudget(false)} aria-label="Close"><Icon name="close"/></button></div><p className="sheet-intro">We’ll use this amount to colour-code each day on your calendar.</p><label className="amount-field"><span>Daily limit</span><div><b>$</b><input name="daily_limit" type="number" min="0.01" step="0.01" inputMode="decimal" defaultValue={dailyLimit ? (dailyLimit / 100).toFixed(2) : ''} placeholder="50.00" autoFocus required/></div></label>{saveError ? <p className="form-error" role="alert">{saveError}</p> : null}<button className="save-button" disabled={isSaving}>{isSaving ? 'Saving…' : budgets[0] ? 'Update daily limit' : 'Set daily limit'}</button></form></div> : null}
       {editingTransaction ? <div className="sheet-backdrop" onMouseDown={() => setEditingTransaction(null)}><form className="entry-sheet" role="dialog" aria-modal="true" aria-labelledby="edit-entry-title" onSubmit={updateTransaction} onMouseDown={(event) => event.stopPropagation()}><div className="sheet-handle"/><div className="sheet-heading"><div><p className="eyebrow">Activity details</p><h2 id="edit-entry-title">Edit transaction</h2></div><button type="button" className="icon-button" onClick={() => setEditingTransaction(null)} aria-label="Close"><Icon name="close"/></button></div><div className="type-toggle"><button type="button" className={entryType === 'expense' ? 'active' : ''} onClick={() => { setEntryType('expense'); setIsConfirmingDelete(false) }}>Expense</button><button type="button" className={entryType === 'income' ? 'active' : ''} onClick={() => { setEntryType('income'); setIsConfirmingDelete(false) }}>Income</button></div><label className="amount-field"><span>Amount</span><div><b>$</b><input name="amount" type="number" min="0.01" step="0.01" inputMode="decimal" defaultValue={(editingTransaction.amount_cents / 100).toFixed(2)} required/></div></label><label className="field"><span>Category</span><select name="category_id" key={`${editingTransaction.id}-${entryType}`} defaultValue={editingTransaction.type === entryType ? editingTransaction.category.id : ''} required><option value="" disabled>Select a category</option>{filteredCategories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label><label className="field"><span>Date</span><input name="occurred_on" type="date" defaultValue={editingTransaction.occurred_on} required/></label><label className="field"><span>Note</span><input name="description" defaultValue={editingTransaction.description ?? ''} placeholder="What was this for?"/></label>{saveError ? <p className="form-error" role="alert">{saveError}</p> : null}<button className="save-button" disabled={isSaving}>{isSaving ? 'Saving…' : 'Save changes'}</button><button type="button" className={`danger-button ${isConfirmingDelete ? 'confirming' : ''}`} disabled={isSaving} onClick={deleteTransaction}>{isConfirmingDelete ? 'Tap again to permanently delete' : 'Delete transaction'}</button></form></div> : null}
       {isManagingCategories ? <div className="sheet-backdrop" onMouseDown={() => setIsManagingCategories(false)}><section className="entry-sheet category-sheet" role="dialog" aria-modal="true" aria-labelledby="categories-title" onMouseDown={(event) => event.stopPropagation()}><div className="sheet-handle"/><div className="sheet-heading"><div><p className="eyebrow">Budget setup</p><h2 id="categories-title">Categories</h2></div><button type="button" className="icon-button" onClick={() => setIsManagingCategories(false)} aria-label="Close"><Icon name="close"/></button></div>{isCreatingCategory || editingCategory ? <form onSubmit={saveCategory}><div className="category-editor-heading"><button type="button" className="text-button" onClick={closeCategoryEditor}>← All categories</button><strong>{editingCategory ? 'Edit category' : 'New category'}</strong></div>{!editingCategory ? <div className="type-toggle"><button type="button" className={categoryType === 'expense' ? 'active' : ''} onClick={() => setCategoryType('expense')}>Expense</button><button type="button" className={categoryType === 'income' ? 'active' : ''} onClick={() => setCategoryType('income')}>Income</button></div> : <p className="category-type-label">{editingCategory.type} category</p>}<label className="field"><span>Name</span><input name="name" maxLength={100} defaultValue={editingCategory?.name ?? ''} placeholder="e.g. Entertainment" autoFocus required/></label><label className="field colour-field"><span>Colour</span><div><input name="colour" type="color" defaultValue={editingCategory?.colour ?? '#7559E8'} aria-label="Category colour"/><span>Choose the category colour</span></div></label>{saveError ? <p className="form-error" role="alert">{saveError}</p> : null}<button className="save-button" disabled={isSaving}>{isSaving ? 'Saving…' : editingCategory ? 'Save category' : 'Create category'}</button>{editingCategory ? <button type="button" className={`danger-button ${isConfirmingDelete ? 'confirming' : ''}`} disabled={isSaving} onClick={deleteCategory}>{isConfirmingDelete ? 'Tap again to delete' : 'Delete category'}</button> : null}</form> : <><button className="new-category-button" onClick={() => { setCategoryType('expense'); setIsCreatingCategory(true) }}><Icon name="plus" size={18}/> New category</button><div className="category-groups">{(['expense', 'income'] as TransactionType[]).map((type) => <div key={type}><p className="eyebrow">{type}</p><div className="category-list">{categories.filter((category) => category.type === type).map((category) => <button type="button" key={category.id} onClick={() => { setSaveError(''); setIsConfirmingDelete(false); setEditingCategory(category) }}><i style={{ background: category.colour }}/><span>{category.name}</span><Icon name="chevron" size={16}/></button>)}</div></div>)}</div></>}</section></div> : null}
+      {isManagingRecurring ? <div className="sheet-backdrop" onMouseDown={() => setIsManagingRecurring(false)}><section className="entry-sheet category-sheet" role="dialog" aria-modal="true" aria-labelledby="recurring-title" onMouseDown={(event) => event.stopPropagation()}><div className="sheet-handle"/><div className="sheet-heading"><div><p className="eyebrow">Automatic entries</p><h2 id="recurring-title">Recurring transactions</h2></div><button type="button" className="icon-button" onClick={() => setIsManagingRecurring(false)} aria-label="Close"><Icon name="close"/></button></div>{isCreatingRecurring ? <form onSubmit={saveRecurringTransaction}><div className="category-editor-heading"><button type="button" className="text-button" onClick={() => { setSaveError(''); setIsCreatingRecurring(false) }}>← All recurring</button><strong>New recurring entry</strong></div><div className="type-toggle"><button type="button" className={recurringType === 'expense' ? 'active' : ''} onClick={() => setRecurringType('expense')}>Expense</button><button type="button" className={recurringType === 'income' ? 'active' : ''} onClick={() => setRecurringType('income')}>Income</button></div><label className="amount-field"><span>Amount</span><div><b>$</b><input name="amount" type="number" min="0.01" step="0.01" inputMode="decimal" placeholder="0.00" autoFocus required/></div></label><label className="field"><span>Category</span><select name="category_id" defaultValue="" required><option value="" disabled>Select a category</option>{recurringCategories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label><label className="field"><span>Frequency</span><select name="frequency" defaultValue="monthly" required><option value="weekly">Weekly</option><option value="biweekly">Every two weeks</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></label><div className="date-grid"><label className="field"><span>Starts</span><input name="starts_on" type="date" defaultValue={dateKey(today.getFullYear(), today.getMonth(), today.getDate())} required/></label><label className="field"><span>Ends (optional)</span><input name="ends_on" type="date"/></label></div><label className="field"><span>Note</span><input name="description" placeholder="e.g. Rent or paycheque"/></label>{saveError ? <p className="form-error" role="alert">{saveError}</p> : null}<button className="save-button" disabled={isSaving}>{isSaving ? 'Saving…' : 'Create recurring entry'}</button></form> : <><button className="new-category-button" onClick={() => { setSaveError(''); setRecurringType('expense'); setIsCreatingRecurring(true) }}><Icon name="plus" size={18}/> New recurring entry</button>{saveError ? <p className="form-error" role="alert">{saveError}</p> : null}<div className="recurring-list">{recurringTransactions.length ? recurringTransactions.map((rule) => <article key={rule.id} className={!rule.active ? 'paused' : ''}><i style={{ background: rule.category.colour }}/><div><strong>{rule.description || rule.category.name}</strong><span>{formatMoney(rule.amount_cents)} · {rule.frequency} · next {rule.next_occurrence_on}</span></div><button disabled={isSaving} onClick={() => toggleRecurringTransaction(rule)}>{rule.active ? 'Pause' : 'Resume'}</button><button className={recurringToDelete === rule.id ? 'confirming' : ''} disabled={isSaving} onClick={() => deleteRecurringTransaction(rule)}>{recurringToDelete === rule.id ? 'Confirm' : 'Delete'}</button></article>) : <div className="insight-empty">No recurring transactions yet.</div>}</div></>}</section></div> : null}
     </div>
   )
 }
