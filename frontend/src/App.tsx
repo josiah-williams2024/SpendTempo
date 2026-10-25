@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 
-import { api, type Budget, type Category, type RecurringTransaction, type Transaction, type User } from './api'
+import { ApiError, api, type Budget, type Category, type RecurringTransaction, type Transaction, type User } from './api'
 import './App.css'
 
 type TransactionType = 'expense' | 'income'
@@ -187,6 +187,7 @@ function App() {
   const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([])
   const [isLoading, setIsLoading] = useState(Boolean(token))
   const [loadError, setLoadError] = useState('')
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [selectedDay, setSelectedDay] = useState(today.getDate())
   const [viewMonth, setViewMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [activeNav, setActiveNav] = useState('Home')
@@ -219,18 +220,29 @@ function App() {
         setRecurringTransactions(recurringData.data)
       })
       .catch((caught) => {
-        localStorage.removeItem(TOKEN_KEY)
-        setToken('')
+        if (caught instanceof ApiError && caught.status === 401) {
+          localStorage.removeItem(TOKEN_KEY)
+          setToken('')
+          setUser(null)
+          return
+        }
         setLoadError(caught instanceof Error ? caught.message : 'Could not load your budget.')
       })
       .finally(() => setIsLoading(false))
-  }, [token])
+  }, [token, loadAttempt])
 
   function authenticated(nextToken: string, nextUser: User) {
     localStorage.setItem(TOKEN_KEY, nextToken)
     setUser(nextUser)
     setToken(nextToken)
+    setLoadError('')
     setIsLoading(true)
+  }
+
+  function retryLoading() {
+    setLoadError('')
+    setIsLoading(true)
+    setLoadAttempt((attempt) => attempt + 1)
   }
 
   async function logout() {
@@ -454,6 +466,7 @@ function App() {
   }
 
   if (!token) return <AuthScreen onAuthenticated={authenticated} />
+  if (!isLoading && !user && loadError) return <main className="load-failure"><div className="brand-mark">ST</div><p className="eyebrow">Connection problem</p><h1>We couldn't load your budget.</h1><p>{loadError}</p><button className="save-button" onClick={retryLoading}>Try again</button><button className="auth-switch" onClick={logout}>Sign out instead</button></main>
   if (isLoading || !user) return <div className="loading-screen"><div className="brand-mark">ST</div><p>Finding your tempo…</p></div>
 
   const year = viewMonth.getFullYear()

@@ -63,6 +63,16 @@ type RecurringTransactionInput = {
 
 const API_URL = import.meta.env.VITE_API_URL ?? ''
 
+export class ApiError extends Error {
+  readonly status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   const response = await fetch(`${API_URL}/api${path}`, {
     ...options,
@@ -77,7 +87,7 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
   if (!response.ok) {
     const payload = await response.json().catch(() => null)
     const validationMessage = payload?.errors ? Object.values(payload.errors).flat()[0] : null
-    throw new Error(validationMessage ?? payload?.message ?? 'Something went wrong.')
+    throw new ApiError(validationMessage ?? payload?.message ?? 'Something went wrong.', response.status)
   }
 
   if (response.status === 204) return undefined as T
