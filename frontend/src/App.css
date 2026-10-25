@@ -240,7 +240,7 @@
 .form-error { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff0ec; color: #b74636; font-size: 11px; font-weight: 700; }
 .status-banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff0ec; color: #b74636; font-size: 11px; }
 
-.auth-shell, .loading-screen { width: min(100%, 480px); min-height: 100vh; margin: 0 auto; background: var(--surface); }
+.auth-shell, .loading-screen, .load-failure { width: min(100%, 480px); min-height: 100vh; margin: 0 auto; background: var(--surface); }
 .auth-shell { padding: 64px 24px 36px; }
 .brand-mark { width: 50px; height: 50px; display: grid; place-items: center; margin-bottom: 30px; border-radius: 17px; background: var(--ink); color: var(--lime); font-size: 15px; font-weight: 900; box-shadow: 0 10px 24px rgba(21,36,32,.18); }
 .auth-showcase { display: none; }
@@ -252,10 +252,17 @@
 .auth-switch { width: 100%; border: 0; padding: 17px; background: transparent; color: var(--green); font-size: 11px; font-weight: 800; }
 .loading-screen { display: grid; padding: 64px 24px 36px; place-content: center; justify-items: center; color: var(--muted); font-size: 12px; }
 .loading-screen .brand-mark { margin: 0 0 16px; }
+.load-failure { padding: 64px 24px 36px; display: flex; flex-direction: column; justify-content: center; }
+.load-failure .brand-mark { margin-bottom: 30px; }
+.load-failure h1 { max-width: 390px; margin: 8px 0 12px; font-size: clamp(34px, 9vw, 46px); line-height: 1; letter-spacing: -1.8px; }
+.load-failure > p:not(.eyebrow) { max-width: 390px; margin: 0 0 10px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.load-failure .save-button { max-width: 390px; }
+.load-failure .auth-switch { max-width: 390px; }
 
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(117, 89, 232, .35); outline-offset: 2px; }
 
 @media (min-width: 900px) {
+  .load-failure { width: min(calc(100% - 64px), 620px); min-height: auto; margin: 12vh auto 0; padding: 58px; border: 1px solid var(--line); border-radius: 30px; box-shadow: 0 24px 70px rgba(21,36,32,.12); }
   .auth-shell { width: min(calc(100% - 64px), 1120px); min-height: min(760px, calc(100vh - 64px)); margin: 32px auto; padding: 0; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(420px, .92fr); overflow: hidden; border: 1px solid var(--line); border-radius: 34px; background: white; box-shadow: 0 28px 80px rgba(21,36,32,.14); }
   .auth-showcase { display: flex; min-height: 696px; padding: 44px 50px; flex-direction: column; position: relative; overflow: hidden; background: var(--ink); color: white; }
   .auth-showcase::after { content: ''; position: absolute; width: 420px; height: 420px; right: -190px; bottom: -190px; border-radius: 50%; border: 80px solid rgba(200,241,90,.08); }
