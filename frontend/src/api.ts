@@ -45,15 +45,15 @@ export type RecurringTransaction = {
 type Collection<T> = { data: T[] }
 type Resource<T> = { data: T }
 type AuthResponse = { token: string; user: User }
-type TransactionInput = {
+export type TransactionInput = {
   category_id: number
   amount_cents: number
   type: TransactionType
   occurred_on: string
   description: string | null
 }
-type CategoryInput = { name: string; type: TransactionType; colour: string }
-type RecurringTransactionInput = {
+export type CategoryInput = { name: string; type: TransactionType; colour: string }
+export type RecurringTransactionInput = {
   category_id: number
   amount_cents: number
   type: TransactionType
