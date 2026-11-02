@@ -104,6 +104,10 @@ export const api = {
     request<AuthResponse>('/login', { method: 'POST', body: JSON.stringify(body) }),
   logout: (token: string) => request<{ message: string }>('/logout', { method: 'POST' }, token),
   user: (token: string) => request<User>('/user', {}, token),
+  updateProfile: (token: string, body: { name: string; email: string }) =>
+    request<User>('/profile', { method: 'PATCH', body: JSON.stringify(body) }, token),
+  updatePassword: (token: string, body: { current_password: string; password: string; password_confirmation: string }) =>
+    request<{ message: string }>('/password', { method: 'PATCH', body: JSON.stringify(body) }, token),
   categories: (token: string) => request<Collection<Category>>('/categories', {}, token),
   createCategory: (token: string, body: CategoryInput) =>
     request<Resource<Category>>('/categories', { method: 'POST', body: JSON.stringify(body) }, token),

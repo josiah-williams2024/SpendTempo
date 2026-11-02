@@ -14,6 +14,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', fn (Request $request) => $request->user());
+    Route::patch('/profile', [AuthController::class, 'updateProfile']);
+    Route::patch('/password', [AuthController::class, 'updatePassword']);
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('transactions', TransactionController::class);
     Route::apiResource('budgets', BudgetController::class);

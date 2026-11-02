@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spendtempo-v1'
+const CACHE_NAME = 'spendtempo-v2'
 const APP_ROOT = '/SpendTempo/'
 const APP_SHELL = [
   APP_ROOT,
