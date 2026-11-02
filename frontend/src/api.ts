@@ -4,10 +4,12 @@ export type User = {
   email: string
 }
 
+export type TransactionType = 'expense' | 'income'
+
 export type Category = {
   id: number
   name: string
-  type: 'income' | 'expense'
+  type: TransactionType
   colour: string
 }
 
@@ -15,7 +17,7 @@ export type Transaction = {
   id: number
   category: Category
   amount_cents: number
-  type: 'income' | 'expense'
+  type: TransactionType
   occurred_on: string
   description: string | null
 }
@@ -31,7 +33,7 @@ export type RecurringTransaction = {
   id: number
   category: Category
   amount_cents: number
-  type: 'income' | 'expense'
+  type: TransactionType
   description: string | null
   frequency: 'weekly' | 'biweekly' | 'monthly' | 'yearly'
   starts_on: string
@@ -46,15 +48,15 @@ type AuthResponse = { token: string; user: User }
 type TransactionInput = {
   category_id: number
   amount_cents: number
-  type: 'income' | 'expense'
+  type: TransactionType
   occurred_on: string
   description: string | null
 }
-type CategoryInput = { name: string; type: 'income' | 'expense'; colour: string }
+type CategoryInput = { name: string; type: TransactionType; colour: string }
 type RecurringTransactionInput = {
   category_id: number
   amount_cents: number
-  type: 'income' | 'expense'
+  type: TransactionType
   description: string | null
   frequency: RecurringTransaction['frequency']
   starts_on: string
