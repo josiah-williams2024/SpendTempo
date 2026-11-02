@@ -12,6 +12,9 @@ export function useSession() {
   const [status, setStatus] = useState<SessionStatus>(token ? 'loading' : 'anonymous')
   const [error, setError] = useState('')
   const [loadAttempt, setLoadAttempt] = useState(0)
+  const [accountError, setAccountError] = useState('')
+  const [accountMessage, setAccountMessage] = useState('')
+  const [isSavingAccount, setIsSavingAccount] = useState(false)
 
   const expire = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
@@ -65,5 +68,50 @@ export function useSession() {
     expire()
   }, [expire, token])
 
-  return { token, user, status, error, authenticate, retry, signOut, expire }
+  const runAccountAction = useCallback(async (action: () => Promise<void>): Promise<boolean> => {
+    setAccountError('')
+    setAccountMessage('')
+    setIsSavingAccount(true)
+    try {
+      await action()
+      return true
+    } catch (caught) {
+      if (caught instanceof ApiError && caught.status === 401) expire()
+      else setAccountError(caught instanceof Error ? caught.message : 'Could not update your account.')
+      return false
+    } finally {
+      setIsSavingAccount(false)
+    }
+  }, [expire])
+
+  const updateProfile = useCallback((name: string, email: string) => runAccountAction(async () => {
+    const updatedUser = await api.updateProfile(token, { name, email })
+    setUser(updatedUser)
+    setAccountMessage('Profile updated.')
+  }), [runAccountAction, token])
+
+  const updatePassword = useCallback((currentPassword: string, password: string, passwordConfirmation: string) => runAccountAction(async () => {
+    await api.updatePassword(token, { current_password: currentPassword, password, password_confirmation: passwordConfirmation })
+    setAccountMessage('Password updated.')
+  }), [runAccountAction, token])
+
+  const clearAccountFeedback = useCallback(() => {
+    setAccountError('')
+    setAccountMessage('')
+  }, [])
+
+  return {
+    token,
+    user,
+    status,
+    error,
+    authenticate,
+    retry,
+    signOut,
+    expire,
+    account: { error: accountError, message: accountMessage, isSaving: isSavingAccount },
+    updateProfile,
+    updatePassword,
+    clearAccountFeedback,
+  }
 }
