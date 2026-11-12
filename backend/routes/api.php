@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\NewPasswordController;
+use App\Http\Controllers\Api\PasswordResetLinkController;
 use App\Http\Controllers\Api\RecurringTransactionController;
 use App\Http\Controllers\Api\TransactionController;
 use Illuminate\Http\Request;
@@ -10,6 +12,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', PasswordResetLinkController::class)->middleware('throttle:6,1');
+Route::post('/reset-password', NewPasswordController::class)->middleware('throttle:6,1');
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout']);

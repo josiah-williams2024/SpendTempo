@@ -250,7 +250,9 @@
 .auth-intro { max-width: 380px; margin: 0 0 28px; color: var(--muted); font-size: 14px; line-height: 1.6; }
 .auth-card { padding: 20px; border: 1px solid var(--line); border-radius: 24px; background: white; box-shadow: 0 16px 35px rgba(21,36,32,.07); }
 .auth-card .field:first-child { margin-top: 0; }
+.auth-card .form-success { margin-top: 12px; }
 .auth-switch { width: 100%; border: 0; padding: 17px; background: transparent; color: var(--green); font-size: 11px; font-weight: 800; }
+.auth-switch + .auth-switch { margin-top: -14px; color: var(--muted); }
 .loading-screen { display: grid; padding: 64px 24px 36px; place-content: center; justify-items: center; color: var(--muted); font-size: 12px; }
 .loading-screen .brand-mark { margin: 0 0 16px; }
 .load-failure { padding: 64px 24px 36px; display: flex; flex-direction: column; justify-content: center; }

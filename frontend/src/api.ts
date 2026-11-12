@@ -102,6 +102,10 @@ export const api = {
     request<AuthResponse>('/register', { method: 'POST', body: JSON.stringify(body) }),
   login: (body: { email: string; password: string }) =>
     request<AuthResponse>('/login', { method: 'POST', body: JSON.stringify(body) }),
+  forgotPassword: (email: string) =>
+    request<{ message: string }>('/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (body: { email: string; token: string; password: string; password_confirmation: string }) =>
+    request<{ message: string }>('/reset-password', { method: 'POST', body: JSON.stringify(body) }),
   logout: (token: string) => request<{ message: string }>('/logout', { method: 'POST' }, token),
   user: (token: string) => request<User>('/user', {}, token),
   updateProfile: (token: string, body: { name: string; email: string }) =>
