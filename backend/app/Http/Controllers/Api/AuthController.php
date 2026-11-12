@@ -7,6 +7,7 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,11 +29,6 @@ class AuthController extends Controller
                 ['name' => 'Transport', 'type' => 'expense', 'colour' => '#7559E8'],
                 ['name' => 'Bills', 'type' => 'expense', 'colour' => '#F47762'],
                 ['name' => 'Other', 'type' => 'expense', 'colour' => '#72807B'],
-            ]);
-            $user->budgets()->create([
-                'daily_limit_cents' => 7500,
-                'starts_on' => now()->startOfMonth()->toDateString(),
-                'ends_on' => null,
             ]);
 
             return $user;
@@ -61,12 +57,17 @@ class AuthController extends Controller
         return response()->json(['message' => 'Signed out.']);
     }
 
+    public function user(Request $request): JsonResponse
+    {
+        return response()->json(UserResource::make($request->user())->resolve());
+    }
+
     public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
         $user->update($request->validated());
 
-        return response()->json($user->only(['id', 'name', 'email']));
+        return response()->json(UserResource::make($user)->resolve());
     }
 
     public function updatePassword(UpdatePasswordRequest $request): JsonResponse
@@ -78,16 +79,12 @@ class AuthController extends Controller
         return response()->json(['message' => 'Password updated.']);
     }
 
-    /** @return array{token: string, user: array{id: int, name: string, email: string}} */
+    /** @return array{token: string, user: array{id: int, name: string, email: string, currency: ?string, onboarding_complete: bool}} */
     private function authenticationPayload(User $user): array
     {
         return [
             'token' => $user->createToken('mobile-app')->plainTextToken,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ],
+            'user' => UserResource::make($user)->resolve(),
         ];
     }
 }

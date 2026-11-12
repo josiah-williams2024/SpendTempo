@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import { ApiError, api, type User } from '../../api'
+import { ApiError, api, type CurrencyCode, type User } from '../../api'
 
 const TOKEN_KEY = 'spendtempo_token'
 
@@ -15,6 +15,8 @@ export function useSession() {
   const [accountError, setAccountError] = useState('')
   const [accountMessage, setAccountMessage] = useState('')
   const [isSavingAccount, setIsSavingAccount] = useState(false)
+  const [onboardingError, setOnboardingError] = useState('')
+  const [isSavingOnboarding, setIsSavingOnboarding] = useState(false)
 
   const expire = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
@@ -100,6 +102,21 @@ export function useSession() {
     setAccountMessage('')
   }, [])
 
+  const completeOnboarding = useCallback(async (currency: CurrencyCode, dailyLimitCents: number): Promise<boolean> => {
+    setOnboardingError('')
+    setIsSavingOnboarding(true)
+    try {
+      setUser(await api.completeOnboarding(token, { currency, daily_limit_cents: dailyLimitCents }))
+      return true
+    } catch (caught) {
+      if (caught instanceof ApiError && caught.status === 401) expire()
+      else setOnboardingError(caught instanceof Error ? caught.message : 'Could not finish setting up your account.')
+      return false
+    } finally {
+      setIsSavingOnboarding(false)
+    }
+  }, [expire, token])
+
   return {
     token,
     user,
@@ -110,6 +127,7 @@ export function useSession() {
     signOut,
     expire,
     account: { error: accountError, message: accountMessage, isSaving: isSavingAccount },
+    onboarding: { error: onboardingError, isSaving: isSavingOnboarding, complete: completeOnboarding },
     updateProfile,
     updatePassword,
     clearAccountFeedback,

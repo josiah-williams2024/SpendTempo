@@ -1,8 +1,16 @@
-export function formatMoney(cents: number): string {
+import type { CurrencyCode } from '../api'
+
+export function formatMoney(cents: number, currency: CurrencyCode = 'CAD'): string {
   return new Intl.NumberFormat('en-CA', {
     style: 'currency',
-    currency: 'CAD',
+    currency,
   }).format(cents / 100)
+}
+
+export function currencySymbol(currency: CurrencyCode): string {
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency, currencyDisplay: 'narrowSymbol' })
+    .formatToParts(0)
+    .find((part) => part.type === 'currency')?.value ?? currency
 }
 
 export function dollarsToCents(dollars: number): number {

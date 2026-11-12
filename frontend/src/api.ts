@@ -2,7 +2,11 @@ export type User = {
   id: number
   name: string
   email: string
+  currency: CurrencyCode | null
+  onboarding_complete: boolean
 }
+
+export type CurrencyCode = 'CAD' | 'USD' | 'EUR' | 'GBP' | 'AUD'
 
 export type TransactionType = 'expense' | 'income'
 
@@ -106,6 +110,8 @@ export const api = {
     request<{ message: string }>('/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
   resetPassword: (body: { email: string; token: string; password: string; password_confirmation: string }) =>
     request<{ message: string }>('/reset-password', { method: 'POST', body: JSON.stringify(body) }),
+  completeOnboarding: (token: string, body: { currency: CurrencyCode; daily_limit_cents: number }) =>
+    request<User>('/onboarding', { method: 'POST', body: JSON.stringify(body) }, token),
   logout: (token: string) => request<{ message: string }>('/logout', { method: 'POST' }, token),
   user: (token: string) => request<User>('/user', {}, token),
   updateProfile: (token: string, body: { name: string; email: string }) =>
