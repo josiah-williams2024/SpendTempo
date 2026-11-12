@@ -5,7 +5,7 @@ import { todayKey } from '../lib/dates'
 
 type WorkspaceStatus = 'idle' | 'loading' | 'ready' | 'error'
 
-export function useBudgetWorkspace(token: string, onUnauthorized: () => void) {
+export function useBudgetWorkspace(token: string, onUnauthorized: () => void, enabled = true) {
   const [categories, setCategories] = useState<Category[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [budgets, setBudgets] = useState<Budget[]>([])
@@ -18,7 +18,7 @@ export function useBudgetWorkspace(token: string, onUnauthorized: () => void) {
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
-    if (!token) return
+    if (!token || !enabled) return
     let cancelled = false
 
     async function load() {
@@ -48,7 +48,7 @@ export function useBudgetWorkspace(token: string, onUnauthorized: () => void) {
 
     void load()
     return () => { cancelled = true }
-  }, [loadAttempt, onUnauthorized, token])
+  }, [enabled, loadAttempt, onUnauthorized, token])
 
   const retry = useCallback(() => {
     setLoadError('')
@@ -136,7 +136,7 @@ export function useBudgetWorkspace(token: string, onUnauthorized: () => void) {
 
   return {
     data: { categories, transactions, budgets, recurringTransactions },
-    state: { status: token && loadedToken !== token ? 'loading' : status, loadError, actionError, isSaving },
+    state: { status: token && enabled && loadedToken !== token ? 'loading' : status, loadError, actionError, isSaving },
     actions: {
       retry,
       clearActionError: () => setActionError(''),

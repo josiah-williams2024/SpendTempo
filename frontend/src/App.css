@@ -253,6 +253,10 @@
 .auth-card .form-success { margin-top: 12px; }
 .auth-switch { width: 100%; border: 0; padding: 17px; background: transparent; color: var(--green); font-size: 11px; font-weight: 800; }
 .auth-switch + .auth-switch { margin-top: -14px; color: var(--muted); }
+.onboarding-preview { max-width: 430px; padding: 22px; position: relative; z-index: 1; display: grid; gap: 7px; border: 1px solid rgba(255,255,255,.1); border-radius: 22px; background: rgba(255,255,255,.07); }
+.onboarding-preview span, .onboarding-preview small { color: #b7c2be; font-size: 11px; }
+.onboarding-preview strong { color: var(--lime); font-size: 34px; }
+.onboarding-shell .amount-field { margin-top: 18px; }
 .loading-screen { display: grid; padding: 64px 24px 36px; place-content: center; justify-items: center; color: var(--muted); font-size: 12px; }
 .loading-screen .brand-mark { margin: 0 0 16px; }
 .load-failure { padding: 64px 24px 36px; display: flex; flex-direction: column; justify-content: center; }
