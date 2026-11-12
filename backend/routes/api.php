@@ -4,10 +4,10 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\NewPasswordController;
+use App\Http\Controllers\Api\OnboardingController;
 use App\Http\Controllers\Api\PasswordResetLinkController;
 use App\Http\Controllers\Api\RecurringTransactionController;
 use App\Http\Controllers\Api\TransactionController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -17,7 +17,8 @@ Route::post('/reset-password', NewPasswordController::class)->middleware('thrott
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', fn (Request $request) => $request->user());
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/onboarding', OnboardingController::class);
     Route::patch('/profile', [AuthController::class, 'updateProfile']);
     Route::patch('/password', [AuthController::class, 'updatePassword']);
     Route::apiResource('categories', CategoryController::class);

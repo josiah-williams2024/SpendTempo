@@ -2,7 +2,7 @@
 
 use App\Models\User;
 
-it('registers a user with starter categories and returns a token', function () {
+it('registers a user with starter categories ready for onboarding and returns a token', function () {
     $response = $this->postJson('/api/register', [
         'name' => 'Josiah Williams',
         'email' => 'josiah@example.com',
@@ -10,13 +10,14 @@ it('registers a user with starter categories and returns a token', function () {
         'password_confirmation' => 'password123',
     ])->assertCreated()
         ->assertJsonPath('user.name', 'Josiah Williams')
-        ->assertJsonStructure(['token', 'user' => ['id', 'name', 'email']]);
+        ->assertJsonPath('user.onboarding_complete', false)
+        ->assertJsonStructure(['token', 'user' => ['id', 'name', 'email', 'currency', 'onboarding_complete']]);
 
     $user = User::where('email', 'josiah@example.com')->firstOrFail();
 
     expect($response->json('token'))->toBeString()->not->toBeEmpty();
     expect($user->categories()->count())->toBe(7);
-    expect($user->budgets()->value('daily_limit_cents'))->toBe(7500);
+    expect($user->budgets()->count())->toBe(0);
 });
 
 it('returns a token for valid credentials', function () {
